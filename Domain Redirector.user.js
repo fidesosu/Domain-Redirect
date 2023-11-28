@@ -1,6 +1,6 @@
 // ==UserScript==
-// @author			 fides
 // @name         Domain Redirector
+// @author	 fides
 // @namespace    https://github.com/fidesosu/Domain-Redirect
 // @version      1.0
 // @description  Redirect specified domains to their replacements
@@ -12,14 +12,6 @@
 // ==/UserScript==
 
 (function() {
-	// Function to redirect the browser to the replacement URL
-	function redirect(originalURL, replacementURL) {
-		const newURL = originalURL.replace(window.location.href, replacementURL);
-		if (newURL !== originalURL) {
-			window.location.href = newURL;
-		}
-	}
-
 	// Retrieve domain replacements from storage
 	function getDomainReplacements() {
 		const replacementsStr = GM_getValue("domainReplacements", "{}");
@@ -51,31 +43,42 @@
 	// Check if the current domain needs to be replaced
 	function checkDomain() {
 		const currentURL = window.location.href;
+		const normalizedURL = window.location.hostname+window.location.pathname;
 		const currentDomain = window.location.hostname;
+		const currentSubdomain = currentDomain.split(".")[0];
 		const currentPath = window.location.pathname;
 		const replacements = getDomainReplacements();
-		const whitelist = GM_getValue("whitelist", []);
-		const blacklist = GM_getValue("blacklist", []);
-		const isWhitelisted = whitelist.includes(currentDomain);
-		const isBlacklisted = blacklist.includes(currentDomain);
 
-		if (isWhitelisted && !isBlacklisted) { // Changed && to ||
-			return;
-		}
+		// Debug
+		console.log("URL: ", currentURL);
+		console.log("Normalized URL: ",normalizedURL);
+		console.log("Domain: ", currentDomain);
+		console.log("SubDomain: ", currentSubdomain);
+		console.log("Path: ", currentPath);
+		console.log(replacements);
 
-		const currentSubdomain = currentDomain.split(".")[0];
 		let replacementURL = null;
 
-		// Check if the current domain is in the replacements
-		if (currentDomain in replacements) {
-			replacementURL = replacements[currentDomain];
-		}
-
-		if (replacementURL) { // This is a problem that needs fixing...
-			const newURL = currentURL.replace(currentDomain, replacementURL); // If 'currentDomain' is changed to currentURL the code adds the 'replacementURL' at the end of the URL.
-			if (newURL !== currentURL) {																			// This needs a way to change the whole url if necessary while remembering the path/arguments in the url or simply just the whole URL.
-				redirect(currentURL, newURL);
+		if (!(normalizedURL in replacements)) {
+			console.log("Normalized URL not found in replacements");
+			if (!(currentDomain in replacements)) {
+				console.log()
+			} else {
+				replacementURL = replacements[currentDomain];
+				console.log(replacementURL);
+				const newURL = currentURL.replace(currentDomain, replacementURL);
+				console.log(newURL);
+				if (newURL !== currentURL) {
+					window.location.href = newURL;
+				}
 			}
+		} else {/*
+			replacementURL = replacements[normalizedURL];
+			const newURL = currentURL.replace(normalizedURL, replacementURL);
+			console.log(replacementURL);
+			if ( !== currentURL) { // infinite loop.
+				window.location.href = newURL;
+			}*/
 		}
 	}
 
